@@ -1,0 +1,140 @@
+version: "3.9"
+services:
+  db:
+    container_name: db
+    image: postgres:11-alpine
+    restart: always
+    volumes:
+      - ./volumes/postgres/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    networks:
+      - internal
+
+  app:
+    container_name: app
+    build: .docker/app
+    links:
+      - db
+    volumes:
+      - ./volumes/nextcloud:/var/www/html
+    restart: always
+    environment:
+      - POSTGRES_DB
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_HOST
+      - NEXTCLOUD_ADMIN_USER
+      - NEXTCLOUD_ADMIN_PASSWORD
+      - NEXTCLOUD_TRUSTED_DOMAINS
+      - SMTP_HOST
+      - SMTP_SECURE
+      - SMTP_PORT
+      - SMTP_AUTHTYPE
+      - SMTP_NAME
+      - SMTP_PASSWORD
+      - MAIL_FROM_ADDRESS
+      - MAIL_DOMAIN
+    networks:
+      - internal
+
+  web:
+    container_name: web
+    build: .docker/web
+    restart: always
+    volumes:
+      - ./volumes/nextcloud:/var/www/html:ro
+      - ./volumes/nginx/includes:/etc/nginx/conf.d/includes:rw
+    environment:
+      - VIRTUAL_HOST
+      - LETSENCRYPT_HOST
+      - LETSENCRYPT_EMAIL
+    depends_on:
+      - app
+    networks:
+      - internal
+      - reverse-proxy
+      
+  cron:
+    container_name: cron
+    build: .docker/app
+    restart: unless-stopped
+    volumes:
+      - ./volumes/nextcloud:/var/www/html
+    networks:
+      - internal
+    entrypoint: /cron.sh
+
+#proxy reverso
+  nginx-proxy:
+    container_name: nginx-proxy
+    image: jwilder/nginx-proxy
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - .docker/nginx-proxy/vhost.d/:/etc/nginx/vhost.d
+      - .docker/nginx-proxy/conf.d:/etc/nginx/conf.d
+      - ./volumes/nginx/html:/usr/share/nginx/html
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      - reverse-proxy
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+
+#mkcert ssl para domínios locais com certificados auto-assinados (servidor bind9)
+  # mkcert:
+  #   container_name: mkcert
+  #   image: aegypius/mkcert-for-nginx-proxy
+  #   restart: unless-stopped
+  #   environment:
+  #       - NGINX_PROXY_CONTAINER
+  #   depends_on:
+  #       - nginx-proxy
+  #   volumes:
+  #       - /var/run/docker.sock:/var/run/docker.sock:ro
+  #       - ~/.mozilla/firefox:/root/.mozilla/firefox:rw
+  #       - ~/.pki/nssdb:/root/.pki/nssdb:rw
+  #       - ${CA_STORE:-/usr/local/share/ca-certificates}:/usr/local/share/ca-certificates
+  #       - ./certs:/app/certs:rw
+  #   networks:
+  #       - internal
+
+#lets encryp ssl apenas para domínio público válido registrado em um servidor DNS externo.
+  nginx-letsencrypt:
+    container_name: nginx-letsencrypt
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    restart: unless-stopped
+    networks:
+      - reverse-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - .docker/nginx-proxy/vhost.d/:/etc/nginx/vhost.d
+      - ./volumes/nginx/html:/usr/share/nginx/html
+      - ./certs:/etc/nginx/certs:rw
+    environment:
+      - NGINX_PROXY_CONTAINER
+
+  #documentserver:
+  #  image: onlyoffice/documentserver
+  #  restart: always
+  #  environment:
+  #    - VIRTUAL_HOST=${VIRTUAL_HOST_ONLYOFFICE}
+  #    - LETSENCRYPT_HOST=${LETSENCRYPT_HOST_ONLYOFFICE}
+  #  volumes:
+  #    - ./volumes/onlyoffice/DocumentServer/logs:/var/log/onlyoffice
+  #    - ./volumes/onlyoffice/DocumentServer/data:/var/www/onlyoffice/Data
+  #  networks:
+  #    - internal
+  #    - reverse-proxy
+
+networks:
+  reverse-proxy:
+    external: true
+    name: reverse-proxy
+  internal:
+    driver: bridge
