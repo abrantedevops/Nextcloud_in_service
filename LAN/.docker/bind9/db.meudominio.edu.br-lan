@@ -1,0 +1,16 @@
+; Atualizado em 2023-12-08 01:25:34
+; BIND data file for local loopback interface
+;
+$TTL    86400
+$ORIGIN meudominio.edu.br.
+@       IN      SOA     meudominio.edu.br. admthiago.meudominio.edu.br. (
+                              2         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+        IN      A       10.0.128.2
+        IN      NS      ns01.meudominio.edu.br.
+ns01    IN      A       10.0.128.1
+www     IN      A       10.0.128.2

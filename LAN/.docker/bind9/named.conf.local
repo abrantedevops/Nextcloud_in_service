@@ -1,0 +1,28 @@
+//
+// Do any local configuration here
+//
+
+// Consider adding the 1918 zones here, if they are not used in your
+// organization
+//include "/etc/bind/zones.rfc1918";
+
+acl "rede-interna" { 10.0.128.0/23; };
+
+view "interna" {
+        match-clients { "rede-interna"; };
+        recursion yes;
+        zone "meudominio.edu.br" {
+                        type master;
+                        file "/etc/bind/db.meudominio.edu.br-lan";
+        };
+        include "/etc/bind/named.conf.default-zones";
+};
+
+view "slave" {
+        zone "meudominio.edu.br" {
+                        type slave;
+                        file "/var/cache/bind/db.meudominio.edu.br-slave";
+                        masters { 10.0.128.1; };
+                        allow-transfer { 192.168.0.47; };
+        };
+};
