@@ -67,6 +67,15 @@ services:
       - internal
     entrypoint: /cron.sh
 
+  cert:
+    container_name: cert
+    build: .docker/cert
+    volumes:
+      - ./certs:/app/certs
+    restart: always
+    networks:
+      - internal
+
 #proxy reverso
   nginx-proxy:
     container_name: nginx-proxy
@@ -87,22 +96,22 @@ services:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
 
 #mkcert ssl para domínios locais com certificados auto-assinados (servidor bind9)
-  mkcert:
-    container_name: mkcert
-    image: aegypius/mkcert-for-nginx-proxy
-    restart: unless-stopped
-    environment:
-        - NGINX_PROXY_CONTAINER
-    depends_on:
-        - nginx-proxy
-    volumes:
-        - /var/run/docker.sock:/var/run/docker.sock:ro
-        - ~/.mozilla/firefox:/root/.mozilla/firefox:rw
-        - ~/.pki/nssdb:/root/.pki/nssdb:rw
-        - ${CA_STORE:-/usr/local/share/ca-certificates}:/usr/local/share/ca-certificates
-        - ./certs:/app/certs:rw
-    networks:
-        - internal
+  # mkcert:
+  #   container_name: mkcert
+  #   image: aegypius/mkcert-for-nginx-proxy
+  #   restart: unless-stopped
+  #   environment:
+  #       - NGINX_PROXY_CONTAINER
+  #   depends_on:
+  #       - nginx-proxy
+  #   volumes:
+  #       - /var/run/docker.sock:/var/run/docker.sock:ro
+  #       - ~/.mozilla/firefox:/root/.mozilla/firefox:rw
+  #       - ~/.pki/nssdb:/root/.pki/nssdb:rw
+  #       - ${CA_STORE:-/usr/local/share/ca-certificates}:/usr/local/share/ca-certificates
+  #       - ./certs:/app/certs:rw
+  #   networks:
+  #       - internal
 
 #lets encryp ssl apenas para domínio público válido registrado em um servidor DNS externo.
 #  nginx-letsencrypt:

@@ -10,4 +10,9 @@ thiago@server-nextCloud:~/Nextcloud_in_service/LAN$ nano .env
 
  
 
-Em seguida, digite no terminal: “sudo docker-compose up -d” e aguarde o provisionamento da aplicação. -->
+Em seguida, digite no terminal: “sudo docker-compose up -d” e aguarde o provisionamento da aplicação.
+
+
+TESTES
+CERTIFICADO SSL DIRETO NA IMAGEM
+CONTAINER DO BIND9 -->
