@@ -67,6 +67,7 @@ services:
       - internal
     entrypoint: /cron.sh
 
+#container cert para gerar certificados autoassinados para domínios locais
   cert:
     container_name: cert
     build: .docker/cert
