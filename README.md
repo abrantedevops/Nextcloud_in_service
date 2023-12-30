@@ -39,6 +39,8 @@ Para excluir todo o processo, execute o comando “sudo docker-compose down”.
 
 <p align="justify"> Para a versão WAN o certificado SSL é gerado através do Let’s Encrypt, para isso é necessário ter um domínio registrado e configurado apontando em um IP público. Todos os arquivos utilizados nesta versão estão disponíveis no diretório ./WAN/.docker. </p>
 
+<p align="justify"> Execução: </p>
+
 ```bash
 git clone https://github.com/abrantedevops/Nextcloud_in_service.git
 cd Nextcloud_in_service/WAN
